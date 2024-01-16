@@ -8,12 +8,19 @@ import json
 import multiprocessing
 import os
 import shutil
+from typing import List, Union, Optional
 
 from tqdm import tqdm
 
 from logger.utils import colorstr
 
-def read_txt(file_path):
+
+def read_txt(file_path: str) -> List[str]:
+    """
+    read txt file
+    :param file_path:  path of txt file
+    :return:  list of lines
+    """
     if not os.path.exists(file_path):
         raise ValueError('File path does not exist')
     if not file_path.endswith('.txt'):
@@ -25,7 +32,12 @@ def read_txt(file_path):
     return raw_data
 
 
-def read_str_format_list(file_path):
+def read_str_format_list(file_path: str) -> List[str]:
+    """
+    read txt file with str format
+    :param file_path:  path of txt file
+    :return:  list of lines
+    """
     if not file_path.endswith('.txt'):
         raise ValueError('File path must end with .txt')
     if not os.path.exists(file_path):
@@ -36,7 +48,12 @@ def read_str_format_list(file_path):
         return ast.literal_eval(raw_data)
 
 
-def read_json_object(file_path):
+def read_json_object(file_path: str) -> dict:
+    """
+    read json object
+    :param file_path:  path of json file
+    :return:  json object
+    """
     if not file_path.endswith('.json'):
         raise ValueError('File path must end with .json')
     if not os.path.exists(file_path):
@@ -48,7 +65,14 @@ def read_json_object(file_path):
     return data
 
 
-def find_subfolders_with_string(root_dir, search_string):
+def find_subfolders_with_string(root_dir: str,
+                                search_string: str) -> List[str]:
+    """
+    find subfolders with string in root directory
+    :param root_dir:  root directory
+    :param search_string:  string to search
+    :return:  list of subfolders
+    """
     matching_folders = []
     for root, dirs, files in os.walk(root_dir):
         for dir in dirs:
@@ -58,7 +82,18 @@ def find_subfolders_with_string(root_dir, search_string):
     return matching_folders
 
 
-def copy_file_mlpro(file_list, src_root, dst_root, process_num):
+def copy_file_mlpro(file_list: Union[str, List[str]],
+                    src_root: str,
+                    dst_root: str,
+                    process_num: int) -> None:
+    """
+    copy files from src_root to dst_root, with multiprocessing
+    :param file_list:  list of file paths
+    :param src_root:  source root directory
+    :param dst_root:  destination root directory
+    :param process_num:  number of processes
+    :return:  None
+    """
     def copy(arg):
         src, dst, file_path = arg
         try:
@@ -68,7 +103,7 @@ def copy_file_mlpro(file_list, src_root, dst_root, process_num):
                 src_path = file_path
 
             if not os.path.exists(src):
-                print(colorstr('red','File does not exist: {}'.format(src_path)))
+                print(colorstr('red', 'File does not exist: {}'.format(src_path)))
                 return
 
             dst_path = src_path.replace(src, dst)
@@ -78,7 +113,7 @@ def copy_file_mlpro(file_list, src_root, dst_root, process_num):
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
         except Exception as e:
-            print(colorstr('red',e))
+            print(colorstr('red', e))
 
     if isinstance(file_list, str):
         file_list = read_txt(file_list)
@@ -96,8 +131,16 @@ def copy_file_mlpro(file_list, src_root, dst_root, process_num):
     pool.join()
 
 
-def get_subdirectories(root, level, max_level):
-    """ Recursively get subdirectories up to a specified level. """
+def get_subdirectories(root: str,
+                       level: int,
+                       max_level: int) -> List[str]:
+    """
+    get subdirectories from root directory
+    :param root:  root directory
+    :param level:  current level
+    :param max_level:   max level
+    :return:  list of subdirectories
+    """
     if level >= max_level:
         return [root]
     subdirs = []
@@ -111,7 +154,20 @@ def get_subdirectories(root, level, max_level):
     return subdirs
 
 
-def list_files_mlpro(root_dir, process_num, max_depth=1, exclude=None, extensions=None):
+def list_files_mlpro(root_dir: str,
+                     process_num: int,
+                     max_depth: int = 1,
+                     exclude: Optional[List[str]] = None,
+                     extensions: Optional[List[str]] = None) -> List[str]:
+    """
+    list files with multiprocessing
+    :param root_dir:  root directory
+    :param process_num:  number of processes
+    :param max_depth:  max depth
+    :param exclude:  list of strings to exclude
+    :param extensions:  list of extensions
+    :return:  list of file paths
+    """
     def process_directory(root, exc, ext):
         paths = []
         for dirpath, _, files in os.walk(root):

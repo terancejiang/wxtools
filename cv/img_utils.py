@@ -3,12 +3,26 @@ Project: wxtools
 Author: Terance Jiang
 Date: 1/16/2024
 """""""""""""""""""""""""""""
+from typing import Union, List, Tuple, Optional
+
 import numpy as np
 import cv2
 
 
-
-def draw_bbox(img_draw, bbox, color=(0, 255, 255), thickness=2, xywh=False):
+def draw_bbox(img_draw: np.ndarray,
+              bbox: Union[List[int], Tuple[int, int, int, int]],
+              color: Tuple[int, int, int] = (0, 255, 255),
+              thickness: int = 2,
+              xywh: bool = False) -> np.ndarray:
+    """
+    draw bbox on image
+    :param img_draw:  image to draw
+    :param bbox:  bbox to draw
+    :param color:  color of bbox
+    :param thickness:  thickness of bbox
+    :param xywh:  whether bbox is xywh format
+    :return:
+    """
     if xywh:
         bbox[2] += bbox[0]
         bbox[3] += bbox[1]
@@ -18,13 +32,39 @@ def draw_bbox(img_draw, bbox, color=(0, 255, 255), thickness=2, xywh=False):
     return img_draw
 
 
-def draw_text(img_draw, text, pos, color=(0, 255, 255), thickness=2, font_scale=1):
+def draw_text(img_draw: np.ndarray,
+              text: str, pos: Tuple[int, int],
+              color: Tuple[int, int, int] = (0, 255, 255),
+              thickness: int = 2,
+              font_scale: float = 1) -> np.ndarray:
+    """
+    draw text on image
+    :param img_draw:  image to draw
+    :param text:    text to draw
+    :param pos:     position of text
+    :param color:   color of text
+    :param thickness:   thickness of text
+    :param font_scale:  font scale of text
+    :return:  image with text
+    """
     cv2.putText(img_draw, text, pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
     return img_draw
 
 
-def draw_landmarks(img_draw, landmarks, color=(0, 255, 255), thickness=2, draw_num=False):
-
+def draw_landmarks(img_draw: np.ndarray,
+                   landmarks: List[Tuple[int, int]],
+                   color: Tuple[int, int, int] = (0, 255, 255),
+                   thickness: int = 2,
+                   draw_num: bool = False) -> np.ndarray:
+    """
+    draw landmarks on image
+    :param img_draw:  image to draw
+    :param landmarks:  landmarks to draw
+    :param color:  color of landmarks
+    :param thickness:  thickness of landmarks
+    :param draw_num:  whether draw number of landmarks
+    :return:  image with landmarks
+    """
     for idx, landmark in enumerate(landmarks):
         cv2.circle(img_draw, (int(landmark[0]), int(landmark[1])), 2, color, thickness)
         if draw_num:
@@ -32,7 +72,8 @@ def draw_landmarks(img_draw, landmarks, color=(0, 255, 255), thickness=2, draw_n
     return img_draw
 
 
-def preprocess_2gray(img, size=None):
+def preprocess_2gray(img: np.ndarray,
+                     size: Optional[Tuple[int, int]] = None) -> np.ndarray:
     """
     preprocess image from size (h, w, 3) to (1, 1, h, w)
     :param size: output size

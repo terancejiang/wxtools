@@ -7,7 +7,8 @@ import cv2
 import numpy as np
 
 
-def contrast_boost(img: np.ndarray, mode: int) -> np.ndarray:
+def contrast_boost(img: np.ndarray,
+                   mode: int) -> np.ndarray:
     """
     Enhance contrast of an image
     :param img:  Input image
@@ -36,7 +37,18 @@ def contrast_boost(img: np.ndarray, mode: int) -> np.ndarray:
     return res  # Returning the contrast-enhanced image
 
 
-def is_bright_zone_large(img, threshold=0.3, lower=240, higher=255):
+def is_bright_zone_large(img: np.ndarray,
+                         threshold: float = 0.3,
+                         lower: int = 240,
+                         higher: int = 255) -> bool:
+    """
+    Check if the bright area of an image is large
+    :param img:     Input image
+    :param threshold:  Threshold for the percentage of bright area
+    :param lower:  Lower threshold for the intensity of bright pixels
+    :param higher:  Higher threshold for the intensity of bright pixels
+    :return:  True if the bright area is large, False otherwise
+    """
     # Read the image
     # img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
@@ -52,7 +64,18 @@ def is_bright_zone_large(img, threshold=0.3, lower=240, higher=255):
     return bright_percentage > threshold
 
 
-def is_dark_zone_large(img, threshold=0.2, lower=40, higher=255):
+def is_dark_zone_large(img: np.ndarray,
+                       threshold: float = 0.2,
+                       lower: int = 40,
+                       higher: int = 255) -> bool:
+    """
+    Check if the dark area of an image is large
+    :param img:   Input image
+    :param threshold:  Threshold for the percentage of dark area
+    :param lower:  Lower threshold for the intensity of dark pixels
+    :param higher:  Higher threshold for the intensity of dark pixels
+    :return:  True if the dark area is large, False otherwise
+    """
     # Read the image
     # img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 

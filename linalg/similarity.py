@@ -7,15 +7,32 @@ import numpy as np
 from tqdm import tqdm
 
 
-def base_cos_sim(vec1, vec2):
+def base_cos_sim(vec1: np.ndarray, vec2: np.ndarray) -> float:
+    """
+    calculate cosine similarity between two vectors
+    :param vec1:  vector 1
+    :param vec2:  vector 2
+    :return:  cosine similarity
+    """
     return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
 
 
-def uni_cos_sim(vec1, vec2):
+def uni_cos_sim(vec1: np.ndarray, vec2: np.ndarray) -> float:
+    """
+    calculate cosine similarity between two vectors, return value is in [0, 1]
+    :param vec1:  vector 1
+    :param vec2:  vector 2
+    :return:  cosine similarity in [0, 1]
+    """
     return np.dot(vec1, vec2) / ((np.linalg.norm(vec1) * np.linalg.norm(vec2)) * 2 + 1e-6) + 0.5
 
 
-def mat_cos_sim(mat1):
+def mat_cos_sim(mat1: np.ndarray) -> np.ndarray:
+    """
+    calculate cosine similarity of a matrix
+    :param mat1:  matrix
+    :return:  cosine similarity matrix
+    """
     mat1_norm = np.linalg.norm(mat1, axis=1)
     normed_features = mat1 / mat1_norm[:, np.newaxis]
     similarity_matrix = np.dot(normed_features, normed_features.T)
