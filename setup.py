@@ -10,9 +10,9 @@ with open('requirements.txt') as f:
 
 setup(
     name='wxtools',
-    version='0.1',
+    version='0.2',
     packages=find_packages(),
-    # install_requires=requirements,
+    install_requires=requirements,
 )
 
 entry_points = {
@@ -22,7 +22,8 @@ entry_points = {
 },
 
 author = 'JY',
-author_email = 'your.email@example.com',
+author_email = 'yingjiang.jy@gmail.com',
+url = 'https://github.com/terancejiang/wxtools'
 description = 'wxtools'
 long_description = open('README.md').read(),
 long_description_content_type = 'text/markdown',

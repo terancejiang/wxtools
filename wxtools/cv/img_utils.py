@@ -5,6 +5,7 @@ Date: 1/16/2024
 """""""""""""""""""""""""""""
 from typing import Union, List, Tuple, Optional
 
+import onnxruntime as ort
 import numpy as np
 import cv2
 
@@ -92,3 +93,86 @@ def preprocess_2gray(img: np.ndarray,
     img = img[np.newaxis, ...]
 
     return img
+
+
+def bbox_xywh2xyxy(bbox_xywh: np.ndarray) -> np.ndarray:
+    """Transform the bbox format from xywh to x1y1x2y2.
+
+    Args:
+        bbox_xywh (ndarray): Bounding boxes (with scores),
+            shaped (n, 4) or (n, 5). (left, top, width, height, [score])
+    Returns:
+        np.ndarray: Bounding boxes (with scores), shaped (n, 4) or
+          (n, 5). (left, top, right, bottom, [score])
+    """
+    bbox_xyxy = bbox_xywh.copy()
+    bbox_xyxy[2] = bbox_xyxy[2] + bbox_xyxy[0]
+    bbox_xyxy[3] = bbox_xyxy[3] + bbox_xyxy[1]
+
+    return bbox_xyxy
+
+
+def bbox_xyxy2xywh(bbox_xyxy: np.ndarray) -> np.ndarray:
+    """Transform the bbox format from x1y1x2y2to xywh.
+    """
+    bbox_xywh = bbox_xyxy.copy()
+    bbox_xywh[2] = bbox_xywh[2] - bbox_xywh[0]
+    bbox_xywh[3] = bbox_xywh[3] - bbox_xywh[1]
+
+    return bbox_xywh
+
+
+def load_onnx(model_path, cuda=False):
+    """
+    Load ONNX model.
+
+    Parameters:
+    - model_path: path to the ONNX model
+
+    Returns:
+    - sess: ONNX model session
+    """
+
+    # Load the ONNX model
+    if cuda:
+        sess = ort.InferenceSession(model_path, providers=['CUDAExecutionProvider'])
+    else:
+        sess = ort.InferenceSession(model_path, providers=['CPUExecutionProvider'])
+
+    return sess
+
+
+def rotate_point(pt, rot_mat):
+    """
+    rotate x,y points by give rotate matrix
+    :param pt:
+    :param rot_mat:
+    :return:
+    """
+    new_pt = np.array([pt[0], pt[1], 1])
+    new_pt = np.dot(rot_mat, new_pt)
+    return int(new_pt[0]), int(new_pt[1])
+
+
+def infer_onnx_model(sess, input_data):
+    """
+    Load ONNX model and perform inference.
+
+    Parameters:
+    - onnx_model_path: path to the ONNX model
+    - input_data: numpy array to be input to the model for inference
+
+    Returns:
+    - result: output from the model after inference
+    """
+
+    # Load the ONNX model
+    sess = sess
+
+    # Get input name for the model
+    input_name = sess.get_inputs()[0].name
+
+    # Perform inference
+    result = sess.run(None, {input_name: input_data})
+
+    return result

@@ -8,11 +8,73 @@ import json
 import multiprocessing
 import os
 import shutil
+from pathlib import Path
 from typing import List, Union, Optional
 
 from tqdm import tqdm
 
-from logger.utils import colorstr
+from wxtools.logger.utils import colorstr
+
+
+def replace_root_extension(paths: Union[str, List[str]],
+                           src_root: str,
+                           dst_root: str,
+                           src_extension: Union[str, List[str]] = None,
+                           dst_extension: str = None) -> Union[str, List[str]]:
+    """
+    replace root and extension
+    such as "/src_root/a/b/c.txt" -> "/dst_root/a/b/c.jpg"
+
+    if src_extension and dst_extension are None, then replace root only
+
+    if src_extension and dst_extension are not None, then replace root and extension,
+    extension only will be replaced if the file extension is in given src_extension.
+    such as "/src_root/a/b/c.txt" -> "/dst_root/a/b/c.jpg" if src_extension = ".txt" and dst_extension = ".jpg"
+    src_extension can be a list of extensions, such as [".txt", ".png"]
+
+    :param dst_extension:
+    :param src_extension:
+    :param paths:  path or list of paths
+    :param src_root:  source root directory
+    :param dst_root:  destination root directory
+    :return:
+    """
+
+    def replace_suffix(dst_extension: str, path: Path, allowed_extensions: List[str] = None):
+        """
+        replace suffix of a path
+        :param dst_extension:
+        :param path:
+        :param allowed_extensions:
+        :return:  path with replaced suffix
+        """
+        if dst_extension is not None:
+            if path.suffix in allowed_extensions:
+                path = path.with_suffix(dst_extension)
+        return path
+
+    assert all(v is None for v in [src_extension, dst_extension]) or all(
+        v is not None for v in [src_extension, dst_extension]), "Either src or dst extensions should be None or all " \
+                                                                "should be not None."
+    if isinstance(src_extension, str):
+        src_extension = [src_extension]
+
+    if isinstance(paths, str):
+        paths = Path(paths)
+        if dst_extension is not None:
+            paths = replace_suffix(dst_extension, paths, src_extension)
+
+        sub_path = paths.relative_to(src_root)
+        paths = (Path(dst_root) / sub_path).as_posix()
+
+    elif isinstance(paths, list):
+        paths = [Path(path) for path in paths]
+        if dst_extension is not None:
+            paths = [replace_suffix(dst_extension, path, src_extension) for path in paths]
+
+        paths = [(Path(dst_root) / path.relative_to(src_root)).as_posix() for path in paths]
+
+    return paths
 
 
 def read_txt(file_path: str) -> List[str]:
@@ -94,6 +156,7 @@ def copy_file_mlpro(file_list: Union[str, List[str]],
     :param process_num:  number of processes
     :return:  None
     """
+
     def copy(arg):
         src, dst, file_path = arg
         try:
@@ -168,6 +231,7 @@ def list_files_mlpro(root_dir: str,
     :param extensions:  list of extensions
     :return:  list of file paths
     """
+
     def process_directory(root, exc, ext):
         paths = []
         for dirpath, _, files in os.walk(root):
