@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wxtools"
+version = "0.1a1"
+dependencies = [
+]
+requires-python = ">=3.6"
+authors = [
+  {name = "yingjiang", email = "yingjiang.jy@gmail.com"},
+]
+maintainers = [
+  {name = "yingjiang", email = "yingjiang.jy@gmail.com"},
+]
+description = "jy's own wheels!"
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python",
+  "Intended Audience :: Developers",
+
+  "Topic :: Software Development :: Build Tools",
+
+  # Pick your license as you wish (see also "license" above)
+  "License :: OSI Approved :: MIT License",
+
+  # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+]
+
+[project.urls]
+Homepage = "https://github.com/terancejiang/wxtools"
+Documentation = "https://github.com/terancejiang/wxtools"

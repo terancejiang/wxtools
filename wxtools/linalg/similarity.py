@@ -40,6 +40,36 @@ def mat_cos_sim(mat1: np.ndarray) -> np.ndarray:
     return similarity_matrix
 
 
+def cosine_similarity_mean(features):
+    # Normalize each feature vector to unit length
+    norms = np.linalg.norm(features, axis=1, keepdims=True)
+    normalized_features = features / norms
+
+    # Compute cosine similarity, dot product of normalized vectors
+    # because they are normalized, cosine similarity is just the dot product
+    cosine_sim = np.dot(normalized_features, normalized_features.T)
+
+    # Ensure the diagonal is zero before calculating mean, as we don't want to include self-similarity
+    np.fill_diagonal(cosine_sim, 0)
+
+    # Calculate the mean cosine similarity for each feature
+    mean_cosine_sim = np.mean(cosine_sim, axis=1)
+
+    return mean_cosine_sim
+
+
+def get_mean_cosine_similarity(image_names, features):
+    """
+    calculate mean cosine similarity of a matrix
+    :param image_names:
+    :param features:
+    :return:
+    """
+    mean_cosine_sim = cosine_similarity_mean(features)
+    # Map image names to their corresponding mean cosine similarity
+    return dict(zip(image_names, mean_cosine_sim))
+
+
 def feature_cross_sims(mat_dict, threshold=0.9):
     """
     cross calculation of similarity matrix.

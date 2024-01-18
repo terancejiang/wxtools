@@ -17,8 +17,8 @@ from wxtools.logger.utils import colorstr
 
 
 def replace_root_extension(paths: Union[str, List[str]],
-                           src_root: str,
-                           dst_root: str,
+                           src_root: str = None,
+                           dst_root: str = None,
                            src_extension: Union[str, List[str]] = None,
                            dst_extension: str = None) -> Union[str, List[str]]:
     """
@@ -56,6 +56,10 @@ def replace_root_extension(paths: Union[str, List[str]],
     assert all(v is None for v in [src_extension, dst_extension]) or all(
         v is not None for v in [src_extension, dst_extension]), "Either src or dst extensions should be None or all " \
                                                                 "should be not None."
+    assert (src_root is None and dst_root is None) or (
+            src_root is not None and dst_root is not None), "Either src or dst root path should be None or all " \
+                                                            "should be not None."
+
     if isinstance(src_extension, str):
         src_extension = [src_extension]
 
@@ -64,15 +68,17 @@ def replace_root_extension(paths: Union[str, List[str]],
         if dst_extension is not None:
             paths = replace_suffix(dst_extension, paths, src_extension)
 
-        sub_path = paths.relative_to(src_root)
-        paths = (Path(dst_root) / sub_path).as_posix()
+        if src_root is not None:
+            sub_path = paths.relative_to(src_root)
+            paths = (Path(dst_root) / sub_path).as_posix()
 
     elif isinstance(paths, list):
         paths = [Path(path) for path in paths]
         if dst_extension is not None:
             paths = [replace_suffix(dst_extension, path, src_extension) for path in paths]
 
-        paths = [(Path(dst_root) / path.relative_to(src_root)).as_posix() for path in paths]
+        if src_root is not None:
+            paths = [(Path(dst_root) / path.relative_to(src_root)).as_posix() for path in paths]
 
     return paths
 
@@ -144,10 +150,32 @@ def find_subfolders_with_string(root_dir: str,
     return matching_folders
 
 
+def copy_worker(arg):
+    src, dst, file_path = arg
+    try:
+        if not os.path.isabs(file_path):
+            src_path = os.path.join(src, file_path)
+        else:
+            src_path = file_path
+
+        if not os.path.exists(src_path):
+            print(colorstr('red', 'File does not exist: {}'.format(src_path)))
+            return
+
+        dst_path = src_path.replace(src, dst)
+        if os.path.exists(dst_path):
+            return
+
+        os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+        shutil.copyfile(src_path, dst_path)
+    except Exception as e:
+        print(colorstr('red', e))
+
+
 def copy_file_mlpro(file_list: Union[str, List[str]],
                     src_root: str,
                     dst_root: str,
-                    process_num: int) -> None:
+                    process_num: int = 10) -> None:
     """
     copy files from src_root to dst_root, with multiprocessing
     :param file_list:  list of file paths
@@ -156,27 +184,6 @@ def copy_file_mlpro(file_list: Union[str, List[str]],
     :param process_num:  number of processes
     :return:  None
     """
-
-    def copy(arg):
-        src, dst, file_path = arg
-        try:
-            if not os.path.isabs(file_path):
-                src_path = os.path.join(src, file_path)
-            else:
-                src_path = file_path
-
-            if not os.path.exists(src):
-                print(colorstr('red', 'File does not exist: {}'.format(src_path)))
-                return
-
-            dst_path = src_path.replace(src, dst)
-            if os.path.exists(dst_path):
-                return
-
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.copyfile(src, dst)
-        except Exception as e:
-            print(colorstr('red', e))
 
     if isinstance(file_list, str):
         file_list = read_txt(file_list)
@@ -187,34 +194,64 @@ def copy_file_mlpro(file_list: Union[str, List[str]],
 
     pool = multiprocessing.Pool(process_num)
 
-    for _ in tqdm(pool.imap_unordered(copy, args), total=len(args)):
+    for _ in tqdm(pool.imap_unordered(copy_worker, args), total=len(args)):
         pass
 
     pool.close()
     pool.join()
 
 
-def get_subdirectories(root: str,
-                       level: int,
-                       max_level: int) -> List[str]:
+def get_subdirectories(root: Union[str, Path], level: int, max_level: int) -> List[Path]:
     """
-    get subdirectories from root directory
-    :param root:  root directory
-    :param level:  current level
-    :param max_level:   max level
-    :return:  list of subdirectories
+    Get subdirectories from root directory using pathlib.
+
+    :param root: root directory as a Path object
+    :param level: current level
+    :param max_level: max level
+    :return: list of subdirectories as Path objects
     """
-    if level >= max_level:
-        return [root]
+    # List to hold subdirectories
     subdirs = []
+    root = Path(root) if isinstance(root, str) else root
+    # Base case: if the current directory is a directory and we're at or beyond max_level
+    if level >= max_level:
+        return [root] if root.is_dir() else []
+
     try:
-        for entry in os.listdir(root):
-            path = os.path.join(root, entry)
-            if os.path.isdir(path):
-                subdirs.extend(get_subdirectories(path, level + 1, max_level))
+        # Iterate over the entries in the current directory
+        for entry in root.iterdir():
+            # Check if the entry is a directory
+            if entry.is_dir():
+                # Add the subdirectory if the current level is exactly max_level - 1
+                if level == max_level - 1:
+                    subdirs.append(entry)
+                # If we're not at the max_level yet, recurse into the subdirectory
+                else:
+                    subdirs.extend(get_subdirectories(entry, level + 1, max_level))
     except PermissionError:
         pass  # Ignore directories for which you do not have permission
+
     return subdirs
+
+
+def process_directory(arg):
+    root, exc, ext = arg
+    paths = []
+    for dirpath, _, files in os.walk(root):
+        file_paths = []
+        for x in files:
+            if exc is not None:
+                for e in exc:
+                    if e in x:
+                        files.remove(x)
+                        continue
+            if ext is not None:
+                if not x.endswith(tuple(ext)):
+                    files.remove(x)
+                    continue
+            file_paths.append(os.path.join(dirpath, x))
+        paths.extend(file_paths)
+    return paths
 
 
 def list_files_mlpro(root_dir: str,
@@ -231,24 +268,6 @@ def list_files_mlpro(root_dir: str,
     :param extensions:  list of extensions
     :return:  list of file paths
     """
-
-    def process_directory(root, exc, ext):
-        paths = []
-        for dirpath, _, files in os.walk(root):
-            file_paths = []
-            for x in files:
-                if exc is not None:
-                    for e in exc:
-                        if e in x:
-                            files.remove(x)
-                            continue
-                if ext is not None:
-                    if not x.endswith(tuple(ext)):
-                        files.remove(x)
-                        continue
-                file_paths.append(os.path.join(dirpath, x))
-            paths.extend(file_paths)
-        return paths
 
     pool = multiprocessing.Pool(processes=process_num)
 
