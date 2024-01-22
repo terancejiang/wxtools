@@ -1,6 +1,10 @@
 # wxtools
 
-`wxtools` is a comprehensive Python toolkit designed to streamline workflows in image processing, file I/O operations, and similarity computations. This toolkit is crafted to enhance productivity and efficiency for developers dealing with a wide range of tasks including image enhancements, file management, and analysis of vector similarities.
+`wxtools` is a comprehensive Python toolkit designed to streamline workflows in image processing, file I/O operations, and similarity computations. 
+
+The Goal of this project is to speed up my own working and research pipelines. Feel free to use or contribute to this project. 
+
+This toolkit is crafted to enhance productivity and efficiency for developers dealing with a wide range of tasks including image enhancements, file management, and analysis of vector similarities.
 
 ## Installation
 
