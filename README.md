@@ -18,8 +18,11 @@ pip install wxtools
 wxtools is composed of three main modules:
 
 `io_utils`: Provides a set of functions for efficient file I/O operations, path manipulations, and batch file processing.
+
 `img_utils`: Offers a collection of image processing utilities to perform tasks such as contrast enhancement, drawing on images, and image transformations.
+
 `similarity`: Includes functions for calculating and analyzing the similarity between vectors, facilitating operations such as cosine similarity computations.
+
 `others`: Other functions that are not included in the above modules.
 
 ## Usage
