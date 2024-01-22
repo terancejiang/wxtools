@@ -63,6 +63,11 @@ def replace_root_extension(paths: Union[str, List[str]],
     if isinstance(src_extension, str):
         src_extension = [src_extension]
 
+    if '.' not in dst_extension:
+        assert dst_extension is not None, "dst_extension should be a string with a dot, such as '.jpg'"
+    if '.' not in src_extension[0]:
+        assert src_extension is not None, "src_extension should be a string with a dot, such as '.jpg'"
+
     if isinstance(paths, str):
         paths = Path(paths)
         if dst_extension is not None:
@@ -151,20 +156,31 @@ def find_subfolders_with_string(root_dir: str,
 
 
 def copy_worker(arg):
-    src, dst, file_path = arg
+    if len(arg) == 2:
+        src, dst = arg
+        file_path = None
+    else:
+        src, dst, file_path = arg
     try:
-        if not os.path.isabs(file_path):
-            src_path = os.path.join(src, file_path)
+        if file_path is None:
+            src_path = src
+            dst_path = dst
+            if not os.path.exists(src_path):
+                print(colorstr('red', 'File does not exist: {}'.format(src_path)))
+                return
         else:
-            src_path = file_path
+            if not os.path.isabs(file_path):
+                src_path = os.path.join(src, file_path)
+            else:
+                src_path = file_path
 
-        if not os.path.exists(src_path):
-            print(colorstr('red', 'File does not exist: {}'.format(src_path)))
-            return
+            if not os.path.exists(src_path):
+                print(colorstr('red', 'File does not exist: {}'.format(src_path)))
+                return
 
-        dst_path = src_path.replace(src, dst)
-        if os.path.exists(dst_path):
-            return
+            dst_path = src_path.replace(src, dst)
+            if os.path.exists(dst_path):
+                return
 
         os.makedirs(os.path.dirname(dst_path), exist_ok=True)
         shutil.copyfile(src_path, dst_path)
@@ -172,25 +188,35 @@ def copy_worker(arg):
         print(colorstr('red', e))
 
 
-def copy_file_mlpro(file_list: Union[str, List[str]],
-                    src_root: str,
-                    dst_root: str,
+def copy_file_mlpro(file_list: Union[str, List[str]] = None,
+                    src: Union[str, List[str]] = None,
+                    dst: Union[str, List[str]] = None,
                     process_num: int = 10) -> None:
     """
     copy files from src_root to dst_root, with multiprocessing
-    :param file_list:  list of file paths
-    :param src_root:  source root directory
-    :param dst_root:  destination root directory
+    :param file_list:  list of file paths, None if src and dst are List of paths
+    :param src:  source root directory OR list of source paths
+    :param dst:  destination root directory OR list of destination paths
     :param process_num:  number of processes
     :return:  None
     """
+    if file_list is not None:
+        if isinstance(file_list, str):
+            file_list = read_txt(file_list)
+        elif isinstance(file_list, list):
+            pass
 
-    if isinstance(file_list, str):
-        file_list = read_txt(file_list)
-    elif isinstance(file_list, list):
-        pass
+        assert isinstance(src, str) and isinstance(dst, str), \
+            "src and dst should be strings when file_list is not None."
 
-    args = [(src_root, dst_root, file_path) for file_path in file_list]
+        args = [(src, dst, file_path) for file_path in file_list]
+    else:
+        assert isinstance(src, list) and isinstance(dst, list), \
+            "src and dst should be lists when file_list is None."
+        assert len(src) == len(dst), \
+            "src and dst should have the same length when file_list is None."
+
+        args = list(zip(src, dst))
 
     pool = multiprocessing.Pool(process_num)
 

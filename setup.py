@@ -10,7 +10,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='wxtools',
-    version='0.2.1',
+    version='0.2.4',
     packages=find_packages(),
     install_requires=requirements,
 )
