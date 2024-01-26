@@ -16,6 +16,20 @@ from tqdm import tqdm
 from wxtools.logger.utils import colorstr
 
 
+def replace_suffix(dst_extension: str, path: Path, allowed_extensions: List[str] = None):
+    """
+    replace suffix of a path
+    :param dst_extension:
+    :param path:
+    :param allowed_extensions:
+    :return:  path with replaced suffix
+    """
+    if dst_extension is not None:
+        if path.suffix in allowed_extensions:
+            path = path.with_suffix(dst_extension)
+    return path
+
+
 def replace_root_extension(paths: Union[str, List[str]],
                            src_root: str = None,
                            dst_root: str = None,
@@ -25,12 +39,18 @@ def replace_root_extension(paths: Union[str, List[str]],
     replace root and extension
     such as "/src_root/a/b/c.txt" -> "/dst_root/a/b/c.jpg"
 
-    if src_extension and dst_extension are None, then replace root only
+    if src_extension and dst_extension are None, then replace root only:
+    for example:
+    input: ["/src_root/a/b/c.txt",]
+    output: ["/dst_root/a/b/c.txt",]
 
     if src_extension and dst_extension are not None, then replace root and extension,
     extension only will be replaced if the file extension is in given src_extension.
-    such as "/src_root/a/b/c.txt" -> "/dst_root/a/b/c.jpg" if src_extension = ".txt" and dst_extension = ".jpg"
     src_extension can be a list of extensions, such as [".txt", ".png"]
+    for example:
+    input: "/src_root/a/b/c.txt"
+    output: "/dst_root/a/b/c.jpg"
+    if src_extension = ".txt" and dst_extension = ".jpg"
 
     :param dst_extension:
     :param src_extension:
@@ -39,19 +59,6 @@ def replace_root_extension(paths: Union[str, List[str]],
     :param dst_root:  destination root directory
     :return:
     """
-
-    def replace_suffix(dst_extension: str, path: Path, allowed_extensions: List[str] = None):
-        """
-        replace suffix of a path
-        :param dst_extension:
-        :param path:
-        :param allowed_extensions:
-        :return:  path with replaced suffix
-        """
-        if dst_extension is not None:
-            if path.suffix in allowed_extensions:
-                path = path.with_suffix(dst_extension)
-        return path
 
     assert all(v is None for v in [src_extension, dst_extension]) or all(
         v is not None for v in [src_extension, dst_extension]), "Either src or dst extensions should be None or all " \
@@ -161,6 +168,7 @@ def copy_worker(arg):
         file_path = None
     else:
         src, dst, file_path = arg
+
     try:
         if file_path is None:
             src_path = src
