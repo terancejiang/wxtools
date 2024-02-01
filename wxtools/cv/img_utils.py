@@ -3,6 +3,7 @@ Project: wxtools
 Author: Terance Jiang
 Date: 1/16/2024
 """""""""""""""""""""""""""""
+import os
 from typing import Union, List, Tuple, Optional
 
 import onnxruntime as ort
@@ -176,3 +177,4 @@ def infer_onnx_model(sess, input_data):
     result = sess.run(None, {input_name: input_data})
 
     return result
+

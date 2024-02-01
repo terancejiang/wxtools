@@ -14,6 +14,10 @@ from typing import List, Union, Optional
 from tqdm import tqdm
 
 from wxtools.logger.utils import colorstr
+from wxtools.utils.mlpro_utils import run_mlpro
+from wxtools.logger.logger import setup_logger
+
+logger = setup_logger(__name__, log_file=None, log_level='INFO')
 
 
 def replace_suffix(dst_extension: str, path: Path, allowed_extensions: List[str] = None):
@@ -174,7 +178,7 @@ def copy_worker(arg):
             src_path = src
             dst_path = dst
             if not os.path.exists(src_path):
-                print(colorstr('red', 'File does not exist: {}'.format(src_path)))
+                logger.info(colorstr('red', 'File does not exist: {}'.format(src_path)))
                 return
         else:
             if not os.path.isabs(file_path):
@@ -183,7 +187,7 @@ def copy_worker(arg):
                 src_path = file_path
 
             if not os.path.exists(src_path):
-                print(colorstr('red', 'File does not exist: {}'.format(src_path)))
+                logger.info(colorstr('red', 'File does not exist: {}'.format(src_path)))
                 return
 
             dst_path = src_path.replace(src, dst)
@@ -193,7 +197,7 @@ def copy_worker(arg):
         os.makedirs(os.path.dirname(dst_path), exist_ok=True)
         shutil.copyfile(src_path, dst_path)
     except Exception as e:
-        print(colorstr('red', e))
+        logger.info(colorstr('red', e))
 
 
 def copy_file_mlpro(file_list: Union[str, List[str]] = None,
@@ -226,13 +230,7 @@ def copy_file_mlpro(file_list: Union[str, List[str]] = None,
 
         args = list(zip(src, dst))
 
-    pool = multiprocessing.Pool(process_num)
-
-    for _ in tqdm(pool.imap_unordered(copy_worker, args), total=len(args)):
-        pass
-
-    pool.close()
-    pool.join()
+    run_mlpro(copy_worker, args, process_num)
 
 
 def get_subdirectories(root: Union[str, Path], level: int, max_level: int) -> List[Path]:
@@ -288,6 +286,10 @@ def process_directory(arg):
     return paths
 
 
+def split_worker(arg: str, separator: str) -> list:
+    return arg.split(separator)
+
+
 def list_files_mlpro(root_dir: str,
                      process_num: int,
                      max_depth: int = 1,
@@ -302,21 +304,13 @@ def list_files_mlpro(root_dir: str,
     :param extensions:  list of extensions
     :return:  list of file paths
     """
-
-    pool = multiprocessing.Pool(processes=process_num)
-
-    print(colorstr('green', 'Listing subdirectories from {} to depth {}'.format(root_dir, max_depth)))
+    logger.info(colorstr('green', 'Listing subdirectories from {} to depth {}'.format(root_dir, max_depth)))
     subdirectories = get_subdirectories(root_dir, 0, max_depth)
-    print(colorstr('green', 'Found {} subdirectories'.format(len(subdirectories))))
+    logger.info(colorstr('green', 'Found {} subdirectories'.format(len(subdirectories))))
 
     process_args = [(x, exclude, extensions) for x in subdirectories]
 
-    print(colorstr('green', 'Listing files from {} subdirectories'.format(len(subdirectories))))
-    image_paths = []
-    for _ in tqdm(pool.imap_unordered(process_directory, process_args), total=len(process_args)):
-        image_paths.extend(_)
-
-    pool.close()
-    pool.join()
+    logger.info(colorstr('green', 'Listing files from {} subdirectories'.format(len(subdirectories))))
+    image_paths = run_mlpro(process_directory, process_args, process_num)
 
     return image_paths

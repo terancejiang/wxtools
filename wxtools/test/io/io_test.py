@@ -51,16 +51,16 @@ class TestListFilesMlpro(unittest.TestCase):
 # def test_1():
 #     # test replace_root_extension
 #     # replace root only
-#     print(replace_root_extension(r"C:\Users\jiang\PycharmProjects\wxtools\test\io\test.txt",
+#     logger.info(replace_root_extension(r"C:\Users\jiang\PycharmProjects\wxtools\test\io\test.txt",
 #                                  r"C:\Users\jiang\PycharmProjects\wxtools\test\io",
 #                                  r"C:\Users\jiang\PycharmProjects\wxtools\test\io\test2"))
 #
-#     print(replace_root_extension(r"C:\Users\jiang\PycharmProjects\wxtools\test\io\test.txt",
+#     logger.info(replace_root_extension(r"C:\Users\jiang\PycharmProjects\wxtools\test\io\test.txt",
 #                                  r"C:\Users\jiang\PycharmProjects\wxtools\test\io",
 #                                  r"C:\Users\jiang\PycharmProjects\wxtools\test\io\test2",
 #                                  src_extension=".txt",
 #                                  dst_extension=".jpg"))
-#     print(replace_root_extension([r"C:\Users\jiang\PycharmProjects\wxtools\test\io\testc.txt",
+#     logger.info(replace_root_extension([r"C:\Users\jiang\PycharmProjects\wxtools\test\io\testc.txt",
 #                                   r"C:\Users\jiang\PycharmProjects\wxtools\test\io\testy.png",
 #                                   r"C:\Users\jiang\PycharmProjects\wxtools\test\io\testx.jpg"],
 #                                  r"C:\Users\jiang\PycharmProjects\wxtools\test\io",

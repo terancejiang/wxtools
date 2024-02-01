@@ -37,7 +37,7 @@ def test_cosine_similarity():
         assert np.isclose(result[img],
                           expected_result[img]), f"Cosine similarity for {img} did not match the expected value."
 
-    print("All tests passed!")
+    logger.info("All tests passed!")
 
 
 # Run the test case
