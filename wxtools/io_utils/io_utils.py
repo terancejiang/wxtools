@@ -304,6 +304,8 @@ def list_files_mlpro(root_dir: str,
     :param extensions:  list of extensions
     :return:  list of file paths
     """
+    # todo change exclude to path, rename extensions
+
     logger.info(colorstr('green', 'Listing subdirectories from {} to depth {}'.format(root_dir, max_depth)))
     subdirectories = get_subdirectories(root_dir, 0, max_depth)
     logger.info(colorstr('green', 'Found {} subdirectories'.format(len(subdirectories))))
