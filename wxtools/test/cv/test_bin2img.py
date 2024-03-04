@@ -13,7 +13,8 @@ import cv2
 from typing import Union, List, Tuple
 from unittest import TestCase, main
 
-from wxtools.cv.img_utils import bin2img
+from wxtools.cv.bin2png import bin2img
+
 
 class TestBin2Img(TestCase):
 
@@ -90,6 +91,7 @@ class TestBin2Img(TestCase):
         # Test with incorrect size parameter
         with self.assertRaises(ValueError):
             bin2img(self.valid_image_path, size=(100, 100))
+
 
 if __name__ == "__main__":
     main()

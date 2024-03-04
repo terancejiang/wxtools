@@ -10,6 +10,53 @@ import onnxruntime as ort
 import numpy as np
 import cv2
 
+from typing import Union, List
+import os
+from PIL import Image
+
+
+def convert_jp2_to_image(img_in: Union[str, List[str]], output: str, ext: str = 'jpg') -> None:
+    """
+    Convert images from JP2 format to JPG or PNG.
+
+    Parameters:
+    - input (Union[str, List[str]]): A single image path, a list of image paths, or a folder containing JP2 images.
+    - output (str): The destination folder for output images, maintaining the original folder structure.
+    - pngorjpg (str): Set the output format ('jpg' or 'png'). Default is 'jpg'.
+
+    Returns:
+    - None: Converts files and saves them to the specified output directory.
+    """
+
+    def convert_file(img_path: str) -> None:
+        """Helper function to convert a single file."""
+        try:
+            with Image.open(img_path) as img:
+                file_name = os.path.splitext(os.path.basename(img_path))[0]
+                output_path = os.path.join(output, file_name + '.' + ext)
+                img.save(output_path)
+        except Exception as e:
+            print(f"Error converting file {img_path}: {e}")
+
+    if ext not in ['jpg', 'png']:
+        assert ValueError("Output format must be 'jpg' or 'png'.")
+
+    if isinstance(img_in, list):
+        for file_path in img_in:
+            convert_file(file_path)
+    elif os.path.isdir(img_in):
+        for root, dirs, files in os.walk(img_in):
+            for file in files:
+                if file.lower().endswith('.jp2'):
+                    file_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(root, img_in)
+                    output_dir = os.path.join(output, relative_path)
+                    if not os.path.exists(output_dir):
+                        os.makedirs(output_dir)
+                    convert_file(file_path)
+    else:
+        convert_file(img_in)
+
 
 def draw_bbox(img_draw: np.ndarray,
               bbox: Union[List[int], Tuple[int, int, int, int]],
