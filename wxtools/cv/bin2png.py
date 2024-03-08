@@ -9,16 +9,18 @@ File Name: bin2png.py
 """
 import argparse
 import os
-from typing import Union, List, Tuple
+import tkinter as tk
+from tkinter import filedialog, font
 
 import cv2
 import numpy as np
 
 
-def bin2img(images: Union[np.ndarray, str, List[np.ndarray], List[str]],
-            img_size: Tuple[int, int] = (600, 800),
-            channel: int = 1,
-            output_dst: str = None) -> List[np.ndarray]:
+# def bin2img(images: Union[np.ndarray, str, List[np.ndarray], List[str]],
+#             img_size: Tuple[int, int] = (600, 800),
+#             channel: int = 1,
+#             output_dst: str = None) -> List[np.ndarray]:
+def bin2img(images, img_size=(600, 800), channel=1, output_dst=None):
     """
     convert binary image to cv2 images
     :param channel:  channel of binary image
@@ -75,19 +77,91 @@ def bin2img(images: Union[np.ndarray, str, List[np.ndarray], List[str]],
                 output_path = os.path.join(output_dst, os.path.basename(image_paths[idx]).replace(".bin", ".png"))
             else:
                 output_path = os.path.join(output_dst, f"image_{idx}.png")
+            if not os.path.exists(output_dst):
+                os.makedirs(output_dst, exist_ok=True)
             cv2.imwrite(output_path, image_output)
 
     return converted_images
 
 
+class Bin2ImgApp:
+    def __init__(self, master):
+        self.master = master
+        master.title("Bin2Img Converter")
+
+        # Define a larger font
+        self.custom_font = font.Font(family="Helvetica", size=20)
+
+        # Apply the font to labels, entries, and buttons
+        tk.Label(master, text="Source Folder:", font=self.custom_font).grid(row=0)
+        tk.Label(master, text="Output Folder:", font=self.custom_font).grid(row=1)
+        tk.Label(master, text="Image Size (WxH):", font=self.custom_font).grid(row=2)
+        tk.Label(master, text="Channel:", font=self.custom_font).grid(row=3)
+
+        self.src_entry = tk.Entry(master, font=self.custom_font)
+        self.src_entry.grid(row=0, column=1)
+        tk.Button(master, text="Browse", font=self.custom_font, command=self.browse_src).grid(row=0, column=2)
+
+        self.out_entry = tk.Entry(master, font=self.custom_font)
+        self.out_entry.grid(row=1, column=1)
+        tk.Button(master, text="Browse", font=self.custom_font, command=self.browse_out).grid(row=1, column=2)
+
+        self.size_entry = tk.Entry(master, font=self.custom_font)
+        self.size_entry.insert(0, "600x800")  # Default size
+        self.size_entry.grid(row=2, column=1)
+
+        self.channel_entry = tk.Entry(master, font=self.custom_font)
+        self.channel_entry.insert(0, "1")  # Default channel
+        self.channel_entry.grid(row=3, column=1)
+
+        tk.Button(master, text="Convert", font=self.custom_font, command=self.convert).grid(row=4, column=1)
+
+    def browse_src(self):
+        directory = filedialog.askdirectory()
+        self.src_entry.delete(0, tk.END)
+        self.src_entry.insert(0, directory)
+
+    def browse_out(self):
+        directory = filedialog.askdirectory()
+        self.out_entry.delete(0, tk.END)
+        self.out_entry.insert(0, directory)
+
+    def convert(self):
+        # Conversion logic remains the same
+        src_dir = self.src_entry.get()
+        out_dir = self.out_entry.get()
+        size = tuple(map(int, self.size_entry.get().split('x')))
+        channel = int(self.channel_entry.get())
+
+        images = src_dir  # Pass the source directory directly
+        bin2img(images, img_size=size, channel=channel, output_dst=out_dir)
+        CustomDialog(self.master, "Images converted successfully.")
+
+
+class CustomDialog:
+    def __init__(self, master, text):
+        top = self.top = tk.Toplevel(master)
+        self.custom_font = font.Font(family="Helvetica", size=12)  # Custom font
+
+        tk.Label(top, text=text, font=self.custom_font).pack(pady=10)
+        tk.Button(top, text="OK", command=self.ok, font=self.custom_font).pack(pady=5)
+
+    def ok(self):
+        self.top.destroy()
+
+# if __name__ == "__main__":
+#     root = tk.Tk()
+#     app = Bin2ImgApp(root)
+#     root.mainloop()
+# # #
 if __name__ == "__main__":
 
     # Example usage:
     # python bin2img.py --images /image/path --size 600 800 --channel 1 --output_dst /output/directory
 
     parser = argparse.ArgumentParser(description='Convert binary image(s) to cv2 images.')
-    parser.add_argument('--images', nargs='+',
-                        help='Path to the image(s). Can be a single image path, or multiple image paths', required=True)
+    parser.add_argument('--images', nargs='+', default='',
+                        help='Path to the image(s). Can be a single image path, or multiple image paths')
     parser.add_argument('--size', nargs=2, type=int, default=[600, 800],
                         help='Size of the output images as two integers: width height')
     parser.add_argument('--channel', type=int, default=1, help='Number of channels in the image')
