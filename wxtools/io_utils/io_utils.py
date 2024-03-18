@@ -8,8 +8,9 @@ import json
 import multiprocessing
 import os
 import shutil
+from itertools import groupby
 from pathlib import Path
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Tuple, Any
 
 from tqdm import tqdm
 
@@ -32,6 +33,50 @@ def replace_suffix(dst_extension: str, path: Path, allowed_extensions: List[str]
         if path.suffix in allowed_extensions:
             path = path.with_suffix(dst_extension)
     return path
+
+
+def restructure_bio_dataset(image_paths: list,
+                            dst_root: str,
+                            id_index: int, ) -> tuple[list[Any], list[str]]:
+    """
+    restructure bio dataset, merge images with same id into the same folder, will retrain the same path after id_index
+    such as:  ["/path1/[id_index]/x/1.jpg", "/path2/[id_index]/x/2.jpg"] ->
+                ["/dst_root/[id_index]/x/1.jpg", "/dst_root/[id_index]/x/2.jpg"]
+    :param image_paths:
+    :param dst_root:
+    :param id_index:
+    :return:
+    """
+
+    def id_key(x):
+        return lambda x: x.split('/')[id_index]
+
+    assert image_paths is not None, "image_paths should not be None"
+    assert dst_root is not None, "dst_root should not be None"
+    assert id_index is not None, "id_index should not be None"
+
+    assert isinstance(image_paths, list), "image_paths should be a list"
+
+    dst_paths = list()
+    src_paths = list()
+
+    image_paths.sort(key=lambda x: x.split('/')[id_index])
+
+    image_groups = groupby(image_paths, key=lambda x: x.split('/')[id_index])
+    # image_groups = {k: list(v) for k, v in image_groups}
+
+    for image_id, group in tqdm(image_groups):
+        group = list(group)
+
+        dst_dir = os.path.join(dst_root, image_id)
+        os.makedirs(dst_dir, exist_ok=True)
+        for src_file in group:
+            dst_file = os.path.join(dst_dir, "/".join(src_file.split('/')[id_index:]))
+
+            dst_paths.append(dst_file)
+            src_paths.append(src_file)
+
+    return src_paths, dst_paths
 
 
 def replace_root_extension(paths: Union[str, List[str]],
@@ -272,6 +317,7 @@ def process_directory(arg):
     for dirpath, _, files in os.walk(root):
         file_paths = []
         for x in files:
+            x = os.path.join(dirpath, x)
             if exc is not None:
                 for e in exc:
                     if e in x:
@@ -281,7 +327,7 @@ def process_directory(arg):
                 if not x.endswith(tuple(ext)):
                     files.remove(x)
                     continue
-            file_paths.append(os.path.join(dirpath, x))
+            file_paths.append(x)
         paths.extend(file_paths)
     return paths
 
